@@ -196,8 +196,7 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
             ripple_carry_add(val_e);
             break;
         case MINUS_OP:
-            alu_valb = ~alu_valb + 1;
-            init_rca(alu_vala, alu_valb, 0);
+            init_rca(alu_vala, ~alu_valb, 1);
             ripple_carry_add(val_e);
             break;
         case INV_OP:
@@ -216,6 +215,7 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
             *val_e = alu_vala | (alu_valb << alu_valhw);
             break;
         case MOVK_OP:
+            *val_e = (alu_vala & (~(0xFFFFUL << alu_valhw))) | (alu_valb << alu_valhw);
             break;
         case LSL_OP:
             *val_e = alu_vala << alu_valb;
@@ -227,16 +227,22 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
             *val_e = ((int64_t) alu_vala) >> alu_valb;
             break;
         case PASS_A_OP:
+            *val_e = alu_vala;
             break;
         default:
             return;
     }
 
     if (set_flags) {
-        bool nflag = rca[63].s;
+        bool nflag = (*val_e >> 63);
         bool zflag = *val_e == 0;
-        bool cflag = rca[63].c_out;
-        bool vflag = rca[63].c_out ^ rca[63].c_in;
+        bool cflag = 0;
+        bool vflag = 0;
+
+        if (ALUop != AND_OP) {
+            cflag = rca[63].c_out;
+            vflag = rca[63].c_out ^ rca[63].c_in;
+        }
         
         *nzcv_dst = vflag | (cflag << 1) | (zflag << 2) | (nflag << 3);
     }
