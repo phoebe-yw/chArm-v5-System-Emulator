@@ -65,7 +65,7 @@ comb_logic_t ripple_carry_add(uint64_t *sum) {
 
     uint64_t build_sum = 0;
     for (int i = 0; i < 64; i++) {
-        build_sum |= rca[i].s << i;
+        build_sum |= ((uint64_t) rca[i].s) << i;
     }
     *sum = build_sum;
 
@@ -126,7 +126,7 @@ static bool cond_holds(cond_t cond, uint8_t flags) {
     bool zflag = GET_ZF(flags);
     bool cflag = GET_CF(flags);
     bool vflag = GET_VF(flags);
-    
+
     switch (cond) {
         case C_EQ:
             ret_boolean = zflag;
@@ -194,35 +194,54 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
         case PLUS_OP:
             init_rca(alu_vala, alu_valb, 0);
             ripple_carry_add(val_e);
-            printf("%ld", *val_e);
             break;
         case MINUS_OP:
+            alu_valb = ~alu_valb + 1;
+            init_rca(alu_vala, alu_valb, 0);
+            ripple_carry_add(val_e);
             break;
         case INV_OP:
+            *val_e = alu_vala | (~alu_valb);
             break;
         case OR_OP:
+            *val_e = alu_vala | alu_valb;
             break;
         case EOR_OP:
+            *val_e = alu_vala ^ alu_valb;
             break;
         case AND_OP:
+            *val_e = alu_vala & alu_valb;
             break;
         case MOV_OP:
+            *val_e = alu_vala | (alu_valb << alu_valhw);
             break;
         case MOVK_OP:
             break;
         case LSL_OP:
+            *val_e = alu_vala << alu_valb;
             break;
         case LSR_OP:
+            *val_e = alu_vala >> alu_valb;
             break;
         case ASR_OP:
+            *val_e = ((int64_t) alu_vala) >> alu_valb;
             break;
         case PASS_A_OP:
             break;
         default:
             return;
     }
+
+    if (set_flags) {
+        bool nflag = rca[63].s;
+        bool zflag = *val_e == 0;
+        bool cflag = rca[63].c_out;
+        bool vflag = rca[63].c_out ^ rca[63].c_in;
+        
+        *nzcv_dst = vflag | (cflag << 1) | (zflag << 2) | (nflag << 3);
+    }
+
     return;
-    
 }
 
 /*
