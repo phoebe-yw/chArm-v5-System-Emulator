@@ -86,7 +86,7 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
  * STUDENT TO-DO
  */
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
-    opcode_t *op = itable[bitfield_u32(insnbits, 21, 11)];
+    *op = itable[bitfield_u32(insnbits, 21, 11)];
 
     switch (*op)
     {
@@ -149,9 +149,9 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         imem(current_PC, &out->insnbits, &imem_err);
         out->print_op = itable[bitfield_u32(out->insnbits, 21, 11)];
         
-        if (out->print_op == ERROR_OP) {
+        if (out->print_op == OP_ERROR) {
             out->format = FORMAT_ERROR;
-            out->op = ERROR_OP; 
+            out->op = OP_ERROR; 
         } else {
             fix_instr_aliases(out->insnbits, &out->op); // MIGHT NEED TO SET PRINT OP BACK TO ACTUAL OP IDK CLAUDE SAID SO
             out->format = ftable[out->op]; 
