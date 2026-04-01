@@ -35,8 +35,14 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
     if (D_opcode == OP_RET && val_a == RET_FROM_MAIN_ADDR) {
         *current_PC = 0; // PC can't be 0 normally.
         return;
+    } else if (D_opcode == OP_RET) { // when instruction OP from X stage is RET (TODO EC TO ADD)
+        *current_PC = val_a;
+    } else if (M_opcode == OP_B_COND && !M_cond_val) { // when instruction OP from M stage is B.COND and COND == FALSE
+        *current_PC = seq_succ;
+    } else {
+        *current_PC = pred_PC;
     }
-    // Modify starting here.
+
     return;
 }
 
@@ -57,7 +63,18 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
     if (!current_PC) {
         return; // We use this to generate a halt instruction.
     }
-    // Modify starting here.
+
+    // get sequential instruction i.e. PC + 4
+    *seq_succ = current_PC + 4;
+
+    if (op == OP_B || op == OP_BL) { // B1 format
+        *predicted_PC = current_PC + (bitfield_s64(insnbits, 0, 26) << 2);
+    } else if (op == OP_B_COND) { // B2 Format
+        *predicted_PC = current_PC + (bitfield_s64(insnbits, 5, 19) << 2);
+    } else { // all other instruction for now
+        *predicted_PC = *seq_succ;
+    }
+
     return;
 }
 
@@ -69,7 +86,31 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
  * STUDENT TO-DO
  */
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
-    // Student TODO
+    opcode_t *op = itable[bitfield_u32(insnbits, 21, 11)];
+
+    switch (*op)
+    {
+    case OP_LSL_RI:
+    case OP_LSR_RI:
+        *op = OP_UBFM;
+        break;
+    case OP_LSL_RR:
+    case OP_LSR_RR:
+        *op = OP_UBFMV;
+        break;
+    case OP_CMP_RR:
+        *op = OP_SUBS_RR;
+        break;
+    case OP_CMN_RR:
+        *op = OP_ADDS_RR;
+        break;
+    case OP_TST_RR:
+        *op = OP_ANDS_RR;
+        break;
+    default:
+        break;
+    }
+
     return;
 }
 
@@ -91,7 +132,8 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     uint64_t current_PC = 0;
 
     // Student TODO: Comment this line back in and fill in parameters
-    // select_PC();
+    select_PC(in->pred_PC, X_out->op, X_out->val_a, X_out->multipurpose_val.seq_succ_PC,
+              M_out->op, M_out->cond_holds, M_out->multipurpose_val.seq_succ_PC, &current_PC);
     
     /*
      * Students: This case is for generating HLT instructions
@@ -102,10 +144,20 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         out->op = OP_HLT;
         out->print_op = OP_HLT;
         out->format = ftable[out->op];
-        imem_err = false;
+        imem_err = false; 
     } else {
-        // Student TODO
+        imem(current_PC, &out->insnbits, &imem_err);
+        out->print_op = itable[bitfield_u32(out->insnbits, 21, 11)];
+        
+        if (out->print_op == ERROR_OP) {
+            out->format = FORMAT_ERROR;
+            out->op = ERROR_OP; 
+        } else {
+            fix_instr_aliases(out->insnbits, &out->op); // MIGHT NEED TO SET PRINT OP BACK TO ACTUAL OP IDK CLAUDE SAID SO
+            out->format = ftable[out->op]; 
+        }
 
+        predict_PC(current_PC, out->insnbits, out->op, &F_PC, &out->multipurpose_val.correction_PC); // find next pc
     }
 
     if (imem_err || out->op == OP_ERROR) {
