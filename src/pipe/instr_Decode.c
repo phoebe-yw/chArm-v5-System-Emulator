@@ -42,14 +42,38 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
  */
 static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
                                    int64_t *imm) {
-    switch (op)
-    {
-    case OP_ADD_RI:
-        /* code */
-        break;
-    
-    default:
-        break;
+    switch (op) {
+        case OP_LDUR:
+        case OP_STUR:
+            *imm = bitfield_s64(insnbits, 12, 9);
+            break;
+        case OP_MOVK:
+        case OP_MOVZ:
+            *imm = bitfield_u32(insnbits, 5, 16);
+            break;
+        case OP_ADD_RI:
+        case OP_SUB_RI:
+            *imm = bitfield_u32(insnbits, 10, 12);
+            break;
+        case OP_LSL_RI:
+            *imm = 63 - bitfield_u32(insnbits, 10, 6);
+            break;
+        case OP_LSR_RI:
+        case OP_ASR:
+            *imm = bitfield_u32(insnbits, 16, 6);
+            break;
+        case OP_ADRP:
+            int64_t immhi = bitfield_s64(insnbits, 5, 19);
+            uint32_t immlo = bitfield_u32(insnbits, 29, 2);
+            *imm = ((immhi << 2) | immlo) << 12;
+            break;
+        case OP_B:
+        case OP_BL:
+            *imm = bitfield_s64(insnbits, 0, 26) << 2;
+            break;
+        case OP_B_COND:
+            *imm = bitfield_s64(insnbits, 5, 19) << 2;
+            break;
     }
     return;
 }
