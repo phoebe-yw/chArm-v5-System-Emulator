@@ -74,6 +74,8 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
         case OP_B_COND:
             *imm = bitfield_s64(insnbits, 5, 19) << 2;
             break;
+        default:
+            break;
     }
     return;
 }
@@ -207,48 +209,81 @@ comb_logic_t format_other(uint32_t insnbits, opcode_t op, uint8_t *src1,
 comb_logic_t format_m(uint32_t insnbits, opcode_t op, uint8_t *src1,
                       uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    *src1 = bitfield_u32(insnbits, 5, 5);
+    *src2 = XZR_NUM; // no src2 for M-format
+    *dst = bitfield_u32(insnbits, 0, 5);
+    if (op == OP_STUR) {
+        *dst = 0;
+    }
     return;
 }
 
 comb_logic_t format_i1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    // no src1 or src2 for I1-format
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_i2(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    // no src1 or src2 for I1-format
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_rr(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    *src1 = bitfield_u32(insnbits, 5, 5);
+    *src2 = bitfield_u32(insnbits, 16, 5);
+    *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_ri(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    // no src2 for RI-format
+    *src1 = bitfield_u32(insnbits, 5, 5);
+    *src2 = XZR_NUM;
+    *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_b1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    // no src1 or src2 or dst 
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst = XZR_NUM;
     return;
 }
 
 comb_logic_t format_b2(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    // no src1 or src2 or dst 
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst = XZR_NUM;
     return;
 }
 
 comb_logic_t format_b3(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    // no src2 or dst
+    *src1 = bitfield_u32(insnbits, 5, 5);
+    *src2 = XZR_NUM;
+    *dst = XZR_NUM;
     return;
 }
 
@@ -256,6 +291,10 @@ comb_logic_t format_b3(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t format_s(uint32_t insnbits, opcode_t op, uint8_t *src1,
                       uint8_t *src2, uint8_t *dst) {
+    // no src1 or src2 or dst for S-format
+    *src1 = XZR_NUM;
+    *src2 = XZR_NUM;
+    *dst = XZR_NUM;
     return;
 }
 
@@ -284,10 +323,11 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
-    out->op = in->op;
-    out->print_op = in->print_op;
-    out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
-    decide_alu_op(in->op, out->ALU_op);
+    // out->op = in->op;
+    // out->print_op = in->print_op;
+    // out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+    //decide_alu_op(in->op, out->ALU_op);
+    out->status = STAT_AOK;
 
     return;
 }
