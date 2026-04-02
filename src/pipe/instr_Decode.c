@@ -180,6 +180,36 @@ comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
  */
 comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
     // Student TODO
+    switch (op) {
+        case OP_ADD_RI:
+        case OP_SUB_RI:
+            // src1 and dst already holds SP = 31
+            break;
+        case OP_LDUR:
+            // src1 cant be xzr
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+            break;
+        case OP_STUR:
+            // src1 cant be xzr
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            break;
+        default:
+            // src1, src2, dst can be xzr or sp
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            } 
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
+            if (*dst == 31) {
+                *dst = XZR_NUM;
+            }
+            break;
+    }
     return;
 }
 
