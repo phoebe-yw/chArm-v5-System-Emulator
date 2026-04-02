@@ -42,7 +42,15 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
  */
 static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
                                    int64_t *imm) {
-    // Student TODO
+    switch (op)
+    {
+    case OP_ADD_RI:
+        /* code */
+        break;
+    
+    default:
+        break;
+    }
     return;
 }
 
@@ -55,32 +63,72 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
 static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
     switch (op)
     {
-    case OP_NOP:
-    case OP_B:
-    case OP_BL:
-    case OP_B_COND:
-    case OP_RET:
-    case OP_HLT:
-        *ALU_op = PASS_A_OP;
-        break;
+        case OP_NOP:
+        case OP_B:
+        case OP_B_COND:
+        case OP_BL:
+        case OP_RET:
+        case OP_HLT:
+            *ALU_op = PASS_A_OP;
+            break;
+        
+        case OP_LDUR:
+        case OP_STUR:
+        case OP_ADRP:
+        case OP_ADD_RI:
+        case OP_ADDS_RR:
+        case OP_CMN_RR:
+            *ALU_op = PLUS_OP;
+            break;
 
-    case OP_LDUR:
-    case OP_STUR:
-    case OP_ADRP:
-    case OP_ADD_RI:
-    case OP_ADDS_RR:
-        *ALU_op = PLUS_OP;
-        break;
-    
-    case OP_SUB_RI:
-    case OP_SUBS_RR:
-        *ALU_op = MINUS_OP;
-        break;
+        case OP_SUB_RI:
+        case OP_SUBS_RR:
+        case OP_CMP_RR:
+            *ALU_op = MINUS_OP;
+            break;
+
+        case OP_ANDS_RR:
+        case OP_TST_RR:
+            *ALU_op = AND_OP;
+            break;
+
+        case OP_LSL_RI:
+        case OP_LSL_RR:
+            *ALU_op = LSL_OP;
+            break;
+
+        case OP_LSR_RI:
+        case OP_LSR_RR:
+            *ALU_op = LSR_OP;
+            break;
+
+        case OP_ASR:
+            *ALU_op = ASR_OP;
+            break;
+        
+        case OP_MVN:
+            *ALU_op = INV_OP;
+            break;
+        
+        case OP_ORR_RR:
+            *ALU_op = OR_OP;
+            break;
+        
+        case OP_EOR_RR:
+            *ALU_op = EOR_OP;
+            break;
+
+        case OP_MOVZ:
+            *ALU_op = MOV_OP;
+            break;
+
+        case OP_MOVK:
+            *ALU_op = MOVK_OP;
+            break;
         
     default:
-        *ALU_op = ERROR_OP;
+        break;
     }
-    return;
 }
 
 /*
@@ -212,9 +260,10 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
-    // out->op = in->op;
-    // out->print_op = in->print_op;
-    // decide_alu_op(in->op, out->ALU_op);
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+    decide_alu_op(in->op, out->ALU_op);
 
     return;
 }
