@@ -208,82 +208,78 @@ comb_logic_t format_other(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t format_m(uint32_t insnbits, opcode_t op, uint8_t *src1,
                       uint8_t *src2, uint8_t *dst) {
-    // Student TODO
     *src1 = bitfield_u32(insnbits, 5, 5);
-    *src2 = XZR_NUM; // no src2 for M-format
-    *dst = bitfield_u32(insnbits, 0, 5);
+    // *src2 = XZR_NUM; // no src2 for M-format
+    // *dst = bitfield_u32(insnbits, 0, 5);
     if (op == OP_STUR) {
         *dst = 0;
+        *src2 = bitfield_u32(insnbits, 0, 5);
+    } else {
+        *dst = bitfield_u32(insnbits, 0, 5);
+        *src2 = 0;
     }
     return;
 }
 
 comb_logic_t format_i1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
     // no src1 or src2 for I1-format
-    *src1 = XZR_NUM;
-    *src2 = XZR_NUM;
+    *src1 = 0;
+    *src2 = 0;
     *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_i2(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
-    // no src1 or src2 for I1-format
-    *src1 = XZR_NUM;
-    *src2 = XZR_NUM;
+    // no src1 or src2 for I2-format
+    *src1 = 0;
+    *src2 = 0;
     *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_rr(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
-    *src1 = bitfield_u32(insnbits, 5, 5);
-    *src2 = bitfield_u32(insnbits, 16, 5);
-    *dst = bitfield_u32(insnbits, 0, 5);
+    *src1 = bitfield_u32(insnbits, 5, 5); // Rn
+    *src2 = bitfield_u32(insnbits, 16, 5); // Rm
+    *dst = bitfield_u32(insnbits, 0, 5); // Rd
     return;
 }
 
 comb_logic_t format_ri(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
     // no src2 for RI-format
     *src1 = bitfield_u32(insnbits, 5, 5);
-    *src2 = XZR_NUM;
+    *src2 = 0;
     *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }
 
 comb_logic_t format_b1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
     // no src1 or src2 or dst 
-    *src1 = XZR_NUM;
-    *src2 = XZR_NUM;
-    *dst = XZR_NUM;
+    *src1 = 0;
+    *src2 = 0;
+    *dst = 0;
     return;
 }
 
 comb_logic_t format_b2(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
     // no src1 or src2 or dst 
-    *src1 = XZR_NUM;
-    *src2 = XZR_NUM;
-    *dst = XZR_NUM;
+    *src1 = 0;
+    *src2 = 0;
+    *dst = 0;
     return;
 }
 
 comb_logic_t format_b3(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
     // no src2 or dst
-    *src1 = bitfield_u32(insnbits, 5, 5);
-    *src2 = XZR_NUM;
-    *dst = XZR_NUM;
+    *src1 = bitfield_u32(insnbits, 5, 5); // x30 for src1
+    *src2 = 0;
+    *dst = 0;
     return;
 }
 
@@ -292,9 +288,9 @@ comb_logic_t format_b3(uint32_t insnbits, opcode_t op, uint8_t *src1,
 comb_logic_t format_s(uint32_t insnbits, opcode_t op, uint8_t *src1,
                       uint8_t *src2, uint8_t *dst) {
     // no src1 or src2 or dst for S-format
-    *src1 = XZR_NUM;
-    *src2 = XZR_NUM;
-    *dst = XZR_NUM;
+    *src1 = 0;
+    *src2 = 0;
+    *dst = 0;
     return;
 }
 
