@@ -30,7 +30,20 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                                           x_ctl_sigs_t *X_sigs,
                                           m_ctl_sigs_t *M_sigs,
                                           w_ctl_sigs_t *W_sigs) {
-    // Student TODO
+    // reset all signal to false
+    D_sigs->src2_sel = false;
+    X_sigs->set_flags = false;
+    X_sigs->vala_sel = false;
+    X_sigs->valb_sel = false;
+    M_sigs->dmem_read = false;
+    M_sigs->dmem_write = false;
+    W_sigs->dst_sel = false;
+    W_sigs->w_enable = false;
+    W_sigs->wval_sel = false;
+
+    D_sigs->src2_sel = op == OP_STUR;
+
+    
     return;
 }
 
@@ -349,10 +362,17 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
-    // out->op = in->op;
-    // out->print_op = in->print_op;
-    // out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
-    //decide_alu_op(in->op, out->ALU_op);
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+    d_ctl_sigs_t d_ctl_sigs;
+    generate_DXMW_control(in->op, &d_ctl_sigs, &out->X_sigs, &out->M_sigs, &out->W_sigs);
+    
+    decide_alu_op(in->op, out->ALU_op);
+    if (out->op == OP_B_COND) { // set cond if operation was B.COND
+        out->cond = bitfield_u32(in->insnbits, 0, 4);
+    }
+    
     out->status = STAT_AOK;
 
     return;
