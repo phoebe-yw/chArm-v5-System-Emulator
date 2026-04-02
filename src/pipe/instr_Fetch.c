@@ -86,29 +86,29 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
  * STUDENT TO-DO
  */
 static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
-    *op = itable[bitfield_u32(insnbits, 21, 11)];
+    switch (*op) {
+        case OP_UBFM:
+            *op = bitfield_u32(insnbits, 10, 6) == 63 ? OP_LSR_RI : OP_LSL_RI;
+            break;
 
-    switch (*op)
-    {
-    case OP_LSL_RI:
-    case OP_LSR_RI:
-        *op = OP_UBFM;
-        break;
-    case OP_LSL_RR:
-    case OP_LSR_RR:
-        *op = OP_UBFMV;
-        break;
-    case OP_CMP_RR:
-        *op = OP_SUBS_RR;
-        break;
-    case OP_CMN_RR:
-        *op = OP_ADDS_RR;
-        break;
-    case OP_TST_RR:
-        *op = OP_ANDS_RR;
-        break;
-    default:
-        break;
+        case OP_UBFMV:
+            *op = bitfield_u32(insnbits, 10, 1) == 1 ? OP_LSR_RR : OP_LSL_RR;
+            break;
+            
+        case OP_SUBS_RR:
+            *op = bitfield_u32(insnbits, 0, 5) == 31 ? OP_CMP_RR : OP_SUBS_RR;
+            break;
+
+        case OP_ADDS_RR:
+            *op = bitfield_u32(insnbits, 0, 5) == 31 ? OP_CMN_RR : OP_ADDS_RR;
+            break;
+
+        case OP_ANDS_RR:
+            *op = bitfield_u32(insnbits, 0, 5) == 31 ? OP_TST_RR : OP_ANDS_RR;
+            break;
+        
+        default:
+            break;
     }
 
     return;
@@ -147,17 +147,20 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         imem_err = false; 
     } else {
         imem(current_PC, &out->insnbits, &imem_err);
-        out->print_op = itable[bitfield_u32(out->insnbits, 21, 11)];
+        out->op = itable[bitfield_u32(out->insnbits, 21, 11)]; 
+        out->print_op = out->op;
         
-        if (out->print_op == OP_ERROR) {
+        if (out->op == OP_ERROR) {
             out->format = FORMAT_ERROR;
-            out->op = OP_ERROR; 
+            out->print_op = OP_ERROR; 
         } else {
-            fix_instr_aliases(out->insnbits, &out->op); // MIGHT NEED TO SET PRINT OP BACK TO ACTUAL OP IDK CLAUDE SAID SO
+            fix_instr_aliases(out->insnbits, &out->op);
+            out->print_op = out->op;
             out->format = ftable[out->op]; 
         }
 
-        predict_PC(current_PC, out->insnbits, out->op, &F_PC, &out->multipurpose_val.correction_PC); // find next pc
+        // find next pc
+        predict_PC(current_PC, out->insnbits, out->op, &F_PC, &out->multipurpose_val.seq_succ_PC);
     }
 
     if (imem_err || out->op == OP_ERROR) {

@@ -53,7 +53,33 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
  * and write it to *ALU_op.
  */
 static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
-    // Student TODO
+    switch (op)
+    {
+    case OP_NOP:
+    case OP_B:
+    case OP_BL:
+    case OP_B_COND:
+    case OP_RET:
+    case OP_HLT:
+        *ALU_op = PASS_A_OP;
+        break;
+
+    case OP_LDUR:
+    case OP_STUR:
+    case OP_ADRP:
+    case OP_ADD_RI:
+    case OP_ADDS_RR:
+        *ALU_op = PLUS_OP;
+        break;
+    
+    case OP_SUB_RI:
+    case OP_SUBS_RR:
+        *ALU_op = MINUS_OP;
+        break;
+        
+    default:
+        *ALU_op = ERROR_OP;
+    }
     return;
 }
 
@@ -64,12 +90,12 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
  * register to the output side of the register.
  */
 comb_logic_t copy_m_ctl_sigs(m_ctl_sigs_t *dest, m_ctl_sigs_t *src) {
-    // Student TODO
+    *dest = *src;
     return;
 }
 
 comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
-    // Student TODO
+    *dest = *src;
     return;
 }
 
@@ -185,6 +211,10 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
  * and decide_alu_op.
  */
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-    // Student TODO
+
+    // out->op = in->op;
+    // out->print_op = in->print_op;
+    // decide_alu_op(in->op, out->ALU_op);
+
     return;
 }
