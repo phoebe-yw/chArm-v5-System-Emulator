@@ -46,7 +46,7 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
     X_sigs->set_flags = op == OP_ADDS_RR || op == OP_CMN_RR || 
                         op == OP_SUBS_RR || op == OP_CMP_RR ||
                         op == OP_ANDS_RR || op == OP_TST_RR;
-    X_sigs->vala_sel = op = OP_ADRP || op == OP_BL;
+    X_sigs->vala_sel = op == OP_ADRP || op == OP_BL;
     X_sigs->valb_sel = ftable[op] == FORMAT_RR || OP_STUR; 
 
     M_sigs->dmem_read = OP_LDUR;
@@ -391,7 +391,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     extract_regs(in->insnbits, in->op, in->format, &D_src1, &D_src2, &out->dst);
 
     // read register file
-    regfile(D_src1, D_src2, &out->val_a, &out->val_b);
+    regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
 
     // extract immediate values if have
     extract_immval(in->insnbits, in->op, &out->val_imm);
