@@ -79,17 +79,17 @@ comb_logic_t ripple_carry_add(uint64_t *sum) {
  */
 comb_logic_t regfile_read(uint8_t src1, uint8_t src2, uint64_t *val_a,
                           uint64_t *val_b) {
-    if (src1 == 32) {
+    if (src1 == XZR_NUM) {
         *val_a = 0;
-    } else if (src1 == 31) {
+    } else if (src1 == SP_NUM) {
         *val_a = guest.proc->SP;
     } else {
         *val_a = guest.proc->GPR[src1];
     }
 
-    if (src2 == 32) {
+    if (src2 == XZR_NUM) {
         *val_b = 0;
-    } else if (src2 == 31) {
+    } else if (src2 == SP_NUM) {
         *val_b = guest.proc->SP;
     } else {
         *val_b = guest.proc->GPR[src2];

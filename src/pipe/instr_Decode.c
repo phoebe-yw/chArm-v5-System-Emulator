@@ -47,14 +47,14 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                         op == OP_SUBS_RR || op == OP_CMP_RR ||
                         op == OP_ANDS_RR || op == OP_TST_RR;
     X_sigs->vala_sel = op == OP_ADRP || op == OP_BL;
-    X_sigs->valb_sel = ftable[op] == FORMAT_RR || OP_STUR; 
+    X_sigs->valb_sel = ftable[op] == FORMAT_RR; 
 
-    M_sigs->dmem_read = OP_LDUR;
-    M_sigs->dmem_write = OP_STUR;
+    M_sigs->dmem_read = op == OP_LDUR;
+    M_sigs->dmem_write = op == OP_STUR;
     
     W_sigs->dst_sel = op == OP_BL;
-    W_sigs->w_enable = op == !(op == OP_NOP || op == OP_B || op == OP_B_COND || op == OP_STUR ||
-                               op == OP_RET || op == OP_HLT);
+    W_sigs->w_enable = !(op == OP_NOP || op == OP_B || op == OP_B_COND || op == OP_STUR ||
+                         op == OP_RET || op == OP_HLT);
     W_sigs->wval_sel = op == OP_LDUR;
 
     
