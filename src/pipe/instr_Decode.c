@@ -375,19 +375,33 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
  * and decide_alu_op.
  */
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-
+    // pass through opcode and format
     out->op = in->op;
     out->print_op = in->print_op;
     out->multipurpose_val.seq_succ_PC = in->multipurpose_val.seq_succ_PC;
+    
+    // control signals
     d_ctl_sigs_t d_ctl_sigs;
     generate_DXMW_control(in->op, &d_ctl_sigs, &out->X_sigs, &out->M_sigs, &out->W_sigs);
     
-    decide_alu_op(in->op, out->ALU_op);
+    // decides ALU op
+    decide_alu_op(in->op, &out->ALU_op);
+
+    // extract registers
+    extract_regs(in->insnbits, in->op, in->format, &D_src1, &D_src2, &out->dst);
+
+    // read register file
+    regfile(D_src1, D_src2, &out->val_a, &out->val_b);
+
+    // extract immediate values if have
+    extract_immval(in->insnbits, in->op, &out->val_imm);
     if (out->op == OP_B_COND) { // set cond if operation was B.COND
         out->cond = bitfield_u32(in->insnbits, 0, 4);
     }
-    
-    out->status = STAT_AOK;
+    if (out->op == OP_MOVK || out->op == OP_MOVZ) { // extract halfword for format I1
+        out->val_hw = bitfield_u32(in->insnbits, 21, 2);
+    }
 
+    out->status = in->status;
     return;
 }
