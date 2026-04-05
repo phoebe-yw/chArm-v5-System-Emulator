@@ -43,6 +43,20 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
 
     D_sigs->src2_sel = op == OP_STUR;
 
+    X_sigs->set_flags = op == OP_ADDS_RR || op == OP_CMN_RR || 
+                        op == OP_SUBS_RR || op == OP_CMP_RR ||
+                        op == OP_ANDS_RR || op == OP_TST_RR;
+    X_sigs->vala_sel = op = OP_ADRP || op == OP_BL;
+    X_sigs->valb_sel = ftable[op] == FORMAT_RR || OP_STUR; 
+
+    M_sigs->dmem_read = OP_LDUR;
+    M_sigs->dmem_write = OP_STUR;
+    
+    W_sigs->dst_sel = op == OP_BL;
+    W_sigs->w_enable = op == !(op == OP_NOP || op == OP_B || op == OP_B_COND || op == OP_STUR ||
+                               op == OP_RET || op == OP_HLT);
+    W_sigs->wval_sel = op == OP_LDUR;
+
     
     return;
 }
