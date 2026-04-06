@@ -404,7 +404,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out->cond = bitfield_u32(in->insnbits, 0, 4);
     }
     if (out->op == OP_MOVK || out->op == OP_MOVZ) { // extract halfword for format I1
-        out->val_hw = bitfield_u32(in->insnbits, 21, 2);
+        out->val_hw = bitfield_u32(in->insnbits, 21, 2) << 4;
     }
 
     out->status = in->status;
