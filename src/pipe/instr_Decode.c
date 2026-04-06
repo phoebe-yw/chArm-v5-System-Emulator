@@ -54,7 +54,7 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
     
     W_sigs->dst_sel = op == OP_BL;
     W_sigs->w_enable = !(op == OP_NOP || op == OP_B || op == OP_B_COND || op == OP_STUR ||
-                         op == OP_RET || op == OP_HLT);
+                         op == OP_RET || op == OP_HLT || op == OP_ERROR);
     W_sigs->wval_sel = op == OP_LDUR;
 
     
@@ -391,7 +391,11 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     extract_regs(in->insnbits, in->op, in->format, &D_src1, &D_src2, &out->dst);
 
     // read register file
-    regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
+    out->val_a = 0;
+    out->val_b = 0;
+    if (out->op != OP_NOP && out->op != OP_HLT && out->op != OP_ERROR) {
+        regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
+    }
 
     // extract immediate values if have 
     out->val_imm = 0; // reset imm for instr that does not use it

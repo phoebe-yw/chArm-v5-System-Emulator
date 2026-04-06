@@ -162,12 +162,11 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         // find next pc
         predict_PC(current_PC, out->insnbits, out->op, &F_PC, &out->multipurpose_val.seq_succ_PC);
 
-        // for ADRP case
-        if (out->op == OP_ADRP) {
+        if (out->op == OP_ADRP) { // for ADRP case
             out->multipurpose_val.adrp_val = current_PC & 0xFFFFFFFFFFFFF000;
-        } else if (out->op == OP_LDUR || out->op == OP_STUR) {
+        } else if (out->op == OP_LDUR || out->op == OP_STUR || out->op == OP_ERROR || out->op == OP_HLT) {
             out->multipurpose_val.correction_PC = current_PC;
-        }
+        } 
         // } else {
         //     out->multipurpose_val.seq_succ_PC = F_PC;
         // }
