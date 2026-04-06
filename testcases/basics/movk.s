@@ -10,7 +10,7 @@ start:
     movk x2, #0x90AB, lsl 32
     movk x3, #0xCDEF, lsl 48
     movk x0, #0x5678, lsl 16
-    movk x1, #0x90AB, lsl 32
+    movk x1, #0x90AB, lsl 32 
     movk x2, #0xCDEF, lsl 48
 	movk x3, #0x1234
     movk x0, #0x90AB, lsl 32

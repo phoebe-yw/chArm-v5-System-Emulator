@@ -224,10 +224,6 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
                 *src2 = XZR_NUM;
             }
             break;
-        case OP_BL: 
-            *src1 = XZR_NUM;
-            *src2 = XZR_NUM;
-            break;
         default:
             // src1, src2, dst can be xzr or sp
             if (*src1 == 31) {
@@ -319,8 +315,8 @@ comb_logic_t format_ri(uint32_t insnbits, opcode_t op, uint8_t *src1,
 comb_logic_t format_b1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // no src1 or src2 or dst 
-    *src1 = 0;
-    *src2 = 0;
+    *src1 = 31; // set to xzr in fix_regs
+    *src2 = 31;
     *dst = (op == OP_BL) ? 30 : 0;
 
     return;
@@ -397,11 +393,11 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // read register file
     out->val_a = 0;
     out->val_b = 0;
+    if (in->op == OP_MOVZ) {
+        D_src1 = XZR_NUM; 
+    }
     if (out->op != OP_NOP && out->op != OP_HLT && out->op != OP_ERROR) {
         regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
-    }
-    if (out->op == OP_MOVZ) {
-        out->val_a = 0;
     }
 
     // extract immediate values if have 
