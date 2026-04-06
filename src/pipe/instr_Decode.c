@@ -224,6 +224,10 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
                 *src2 = XZR_NUM;
             }
             break;
+        case OP_BL: 
+            *src1 = XZR_NUM;
+            *src2 = XZR_NUM;
+            break;
         default:
             // src1, src2, dst can be xzr or sp
             if (*src1 == 31) {
@@ -280,10 +284,9 @@ comb_logic_t format_m(uint32_t insnbits, opcode_t op, uint8_t *src1,
 
 comb_logic_t format_i1(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // no src1 or src2 for I1-format
-    *src1 = 0;
+    *src1 = bitfield_u32(insnbits, 0, 5);
     *src2 = 0;
-    *dst = bitfield_u32(insnbits, 0, 5);
+    *dst = *src1; // src1 and dst are the same for I1-format
     return;
 }
 
@@ -318,7 +321,8 @@ comb_logic_t format_b1(uint32_t insnbits, opcode_t op, uint8_t *src1,
     // no src1 or src2 or dst 
     *src1 = 0;
     *src2 = 0;
-    *dst = 0;
+    *dst = (op == OP_BL) ? 30 : 0;
+
     return;
 }
 
@@ -395,6 +399,9 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     out->val_b = 0;
     if (out->op != OP_NOP && out->op != OP_HLT && out->op != OP_ERROR) {
         regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
+    }
+    if (out->op == OP_MOVZ) {
+        out->val_a = 0;
     }
 
     // extract immediate values if have 
