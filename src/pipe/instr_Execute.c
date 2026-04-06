@@ -40,7 +40,6 @@ comb_logic_t execute_instr(x_instr_impl_t* in, m_instr_impl_t* out) {
     out->dst = in->dst;
     out->val_b = in->val_b;
     out->status = in->status;
-    
 
     // copy over control sigs
     copy_m_ctl_sigs(&out->M_sigs, &in->M_sigs);

@@ -27,6 +27,23 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  * copy_w_ctl_signals and dmem.
  */
 comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
-    // Student TODO
+    // copy over everything
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->W_sigs = in->W_sigs;
+    out->dst = in->dst;
+    out->val_ex = in->val_ex;
+    out->status = in->status;
+
+    // perform memory operation if needed
+    // LDUR reads from memory, STUR writes to memory
+    bool dmem_err = false;
+    dmem(in->val_ex, in->val_b, in->M_sigs.dmem_read, in->M_sigs.dmem_write, &out->val_mem, &dmem_err);
+    
+    // bad address check
+    if (dmem_err) {
+        out->status = STAT_ADR;
+    }
+    
     return;
 }
