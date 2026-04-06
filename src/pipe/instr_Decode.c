@@ -393,7 +393,8 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // read register file
     regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
 
-    // extract immediate values if have
+    // extract immediate values if have 
+    out->val_imm = 0; // reset imm for instr that does not use it
     extract_immval(in->insnbits, in->op, &out->val_imm);
     if (out->op == OP_B_COND) { // set cond if operation was B.COND
         out->cond = bitfield_u32(in->insnbits, 0, 4);
