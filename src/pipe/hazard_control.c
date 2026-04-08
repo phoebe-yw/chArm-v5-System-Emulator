@@ -62,8 +62,7 @@ void pipe_control_stage(proc_stage_t stage, bool bubble, bool stall) {
 
 
 bool check_ret_hazard(opcode_t D_opcode) {
-    // Student TODO
-    return false;
+    return D_opcode == OP_RET;
 }
 
 #ifdef EC
@@ -79,19 +78,20 @@ bool check_cb_hazard(opcode_t D_opcode, uint64_t D_val_a) {
 #endif
 
 bool check_mispred_branch_hazard(opcode_t X_opcode, bool X_condval) {
-    // Student TODO
-    return false;
+    return X_opcode == OP_B_COND && !X_condval;
 }
 
 bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
                            opcode_t X_opcode, uint8_t X_dst) {
-    // Student TODO
-    return false;
+    if (X_opcode != OP_LDUR) {
+        return false;
+    }
+
+    return D_src1 == X_dst || D_src2 == X_dst;
 }
 
 bool error(stat_t status) {
-    // Student TODO
-    return false;
+    return status != STAT_BUB || status != STAT_AOK;
 }
 
 comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
@@ -100,7 +100,7 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     /* Students: Change this code */
     // This will need to be updated in week 2, good enough for week 1
 #ifdef PIPE
-    // Student TODO
+    
 #else
     bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS;
     pipe_control_stage(S_FETCH, false, f_stall);
