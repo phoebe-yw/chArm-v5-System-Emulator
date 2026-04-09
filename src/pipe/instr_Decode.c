@@ -54,7 +54,8 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
     
     W_sigs->dst_sel = op == OP_BL;
     W_sigs->w_enable = !(op == OP_NOP || op == OP_B || op == OP_B_COND || op == OP_STUR ||
-                         op == OP_RET || op == OP_HLT || op == OP_ERROR);
+                         op == OP_RET || op == OP_HLT || op == OP_ERROR || op == OP_CMP_RR || 
+                         op == OP_CMN_RR);
     W_sigs->wval_sel = op == OP_LDUR;
 
     
@@ -223,6 +224,13 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
             if (*src2 == 31) {
                 *src2 = XZR_NUM;
             }
+            break;
+        case OP_CMP_RR:
+            *dst = 0;
+            break;
+        case OP_B_COND:
+            *src1 = XZR_NUM;
+            *src2 = XZR_NUM;
             break;
         default:
             // src1, src2, dst can be xzr or sp
@@ -405,6 +413,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     extract_immval(in->insnbits, in->op, &out->val_imm);
     if (out->op == OP_B_COND) { // set cond if operation was B.COND
         out->cond = bitfield_u32(in->insnbits, 0, 4);
+        out->val_imm = 0;
     }
     if (out->op == OP_MOVK || out->op == OP_MOVZ) { // extract halfword for format I1
         out->val_hw = bitfield_u32(in->insnbits, 21, 2) << 4;
