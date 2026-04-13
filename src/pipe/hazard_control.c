@@ -91,7 +91,7 @@ bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
 }
 
 bool error(stat_t status) {
-    return status != STAT_BUB || status != STAT_AOK;
+    return status != STAT_BUB && status != STAT_AOK;
 }
 
 comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
@@ -99,8 +99,22 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
                             bool X_condval) {
     /* Students: Change this code */
     // This will need to be updated in week 2, good enough for week 1 
+    
 #ifdef PIPE
-    if (check_mispred_branch_hazard(X_opcode, X_condval)) {
+    if (error(W_in->status)) {
+        deassert_flags = true;
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, false, true);
+        pipe_control_stage(S_WBACK, false, false);
+    } else if (error(M_in->status)) {
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, false, false);
+        pipe_control_stage(S_WBACK, false, false);
+    } else if (check_mispred_branch_hazard(X_opcode, X_condval)) {
         pipe_control_stage(S_FETCH, false, false);
         pipe_control_stage(S_DECODE, true, false);
         pipe_control_stage(S_EXECUTE, true, false);

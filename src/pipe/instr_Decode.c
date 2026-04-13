@@ -96,6 +96,8 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
             *imm = ((immhi << 2) | immlo) << 12;
             break;
         case OP_B:
+            *imm = 0;
+            break;
         case OP_BL:
             *imm = bitfield_s64(insnbits, 0, 26) << 2;
             break;
@@ -226,8 +228,15 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
             }
             break;
         case OP_CMP_RR:
+            if (*src1 == 31) {
+                *src1 = XZR_NUM;
+            } 
+            if (*src2 == 31) {
+                *src2 = XZR_NUM;
+            }
             *dst = 0;
             break;
+        case OP_NOP:
         case OP_B_COND:
             *src1 = XZR_NUM;
             *src2 = XZR_NUM;
@@ -315,7 +324,7 @@ comb_logic_t format_ri(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
     // no src2 for RI-format
     *src1 = bitfield_u32(insnbits, 5, 5);
-    *src2 = 0;
+    *src2 = 31;
     *dst = bitfield_u32(insnbits, 0, 5);
     return;
 }

@@ -34,7 +34,6 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     out->dst = in->dst;
     out->val_ex = in->val_ex;
     out->status = in->status;
-
     // perform memory operation if needed
     // LDUR reads from memory, STUR writes to memory
     bool dmem_err = false;
@@ -44,6 +43,9 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     if (dmem_err) {
         out->status = STAT_ADR;
     }
-    
+
+    if (out->status == STAT_ADR || STAT_INS) {
+        M_PC = in->multipurpose_val.correction_PC;
+    }
     return;
 }

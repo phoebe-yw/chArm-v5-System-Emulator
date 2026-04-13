@@ -167,9 +167,6 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         } else if (out->op == OP_LDUR || out->op == OP_STUR || out->op == OP_ERROR || out->op == OP_HLT) {
             out->multipurpose_val.correction_PC = current_PC;
         } 
-        // } else {
-        //     out->multipurpose_val.seq_succ_PC = F_PC;
-        // }
     }
 
     if (imem_err || out->op == OP_ERROR) {
