@@ -13,3 +13,4 @@ example.sh
 rename.sh
 .vscode/settings.json
 build/
+out
