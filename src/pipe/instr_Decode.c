@@ -47,7 +47,8 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                         op == OP_SUBS_RR || op == OP_CMP_RR ||
                         op == OP_ANDS_RR || op == OP_TST_RR;
     X_sigs->vala_sel = op == OP_ADRP || op == OP_BL;
-    X_sigs->valb_sel = ftable[op] == FORMAT_RR; 
+    X_sigs->valb_sel = ftable[op] == FORMAT_RR || op == OP_CSEL || op == OP_CSINV ||
+                                     op == OP_CSNEG || op == OP_CSINC; 
 
     M_sigs->dmem_read = op == OP_LDUR;
     M_sigs->dmem_write = op == OP_STUR;
@@ -102,7 +103,7 @@ static comb_logic_t extract_immval(uint32_t insnbits, opcode_t op,
             *imm = bitfield_s64(insnbits, 0, 26) << 2;
             break;
         case OP_B_COND:
-            *imm = bitfield_s64(insnbits, 5, 19) << 2;
+            *imm = 0;
             break;
         default:
             break;
@@ -127,7 +128,6 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         case OP_HLT:
             *ALU_op = PASS_A_OP;
             break;
-        
         case OP_LDUR:
         case OP_STUR:
         case OP_ADRP:
@@ -136,50 +136,54 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         case OP_CMN_RR:
             *ALU_op = PLUS_OP;
             break;
-
         case OP_SUB_RI:
         case OP_SUBS_RR:
         case OP_CMP_RR:
             *ALU_op = MINUS_OP;
             break;
-
         case OP_ANDS_RR:
         case OP_TST_RR:
             *ALU_op = AND_OP;
             break;
-
         case OP_LSL_RI:
         case OP_LSL_RR:
             *ALU_op = LSL_OP;
             break;
-
         case OP_LSR_RI:
         case OP_LSR_RR:
             *ALU_op = LSR_OP;
             break;
-
         case OP_ASR:
             *ALU_op = ASR_OP;
             break;
-        
         case OP_MVN:
             *ALU_op = INV_OP;
             break;
-        
         case OP_ORR_RR:
             *ALU_op = OR_OP;
             break;
-        
         case OP_EOR_RR:
             *ALU_op = EOR_OP;
             break;
-
         case OP_MOVZ:
             *ALU_op = MOV_OP;
             break;
-
         case OP_MOVK:
             *ALU_op = MOVK_OP;
+            break;
+        
+        // EC instructions
+        case OP_CSEL:
+            *ALU_op = CSEL_OP;
+            break;
+        case OP_CSINV:
+            *ALU_op = CSINV_OP;
+            break;
+        case OP_CSINC:
+            *ALU_op = CSINC_OP;
+            break;
+        case OP_CSNEG:
+            *ALU_op = CSNEG_OP;
             break;
         
     default:
@@ -374,7 +378,17 @@ comb_logic_t format_s(uint32_t insnbits, opcode_t op, uint8_t *src1,
  */
 comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
                        uint8_t *src2, uint8_t *dst) {
-    // Student TODO
+    switch (op) 
+    {
+    case OP_CSINC:
+    case OP_CSNEG:
+    case OP_CSEL:
+    case OP_CSINV:
+        format_rr(insnbits, op, src1, src2, dst);
+        break;
+    default:
+        break;
+    }
     return;
 }
 #endif
@@ -413,6 +427,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     if (in->op == OP_MOVZ) {
         D_src1 = XZR_NUM; 
     }
+
     if (out->op != OP_NOP && out->op != OP_HLT && out->op != OP_ERROR) {
         regfile_read(D_src1, D_src2, &out->val_a, &out->val_b);
     }
@@ -420,10 +435,14 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // extract immediate values if have 
     out->val_imm = 0; // reset imm for instr that does not use it
     extract_immval(in->insnbits, in->op, &out->val_imm);
+
     if (out->op == OP_B_COND) { // set cond if operation was B.COND
         out->cond = bitfield_u32(in->insnbits, 0, 4);
-        out->val_imm = 0;
+    } else if (out->op == OP_CSEL || out->op == OP_CSINV ||
+               out->op == OP_CSNEG || out->op == OP_CSINC) {
+        out->cond = bitfield_u32(in->insnbits, 12, 4);
     }
+
     if (out->op == OP_MOVK || out->op == OP_MOVZ) { // extract halfword for format I1
         out->val_hw = bitfield_u32(in->insnbits, 21, 2) << 4;
     }
