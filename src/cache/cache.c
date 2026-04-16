@@ -37,9 +37,7 @@ int dirty_eviction_count = 0;
 // Increment when a clean eviction occurs
 int clean_eviction_count = 0;
 
-/* STUDENT TO-DO: add more globals, structs, macros if necessary */
-
-static size_t _log(size_t x) {
+__attribute__((unused)) static size_t _log(size_t x) {
     size_t result = 0;
     while (x >>= 1) {
         result++;
@@ -67,16 +65,16 @@ cache_t *create_cache(int A_in, int B_in, int C_in, int d_in) {
     for (unsigned int i = 0; i < S; i++) {
         cache->sets[i].lines =
             (cache_line_t *) calloc(cache->A, sizeof(cache_line_t));
+        cache->sets[i].lru_matrix = 0;
+        cache->sets[i].next_lru = ~0ULL;
         for (unsigned int j = 0; j < cache->A; j++) {
             cache->sets[i].lines[j].valid = 0;
             cache->sets[i].lines[j].tag = 0;
-            cache->sets[i].lines[j].lru = 0;
             cache->sets[i].lines[j].dirty = 0;
             cache->sets[i].lines[j].data = calloc(cache->B, sizeof(byte_t));
         }
     }
 
-    /* TODO: add more code for initialization */
     return cache;
 }
 
@@ -105,10 +103,10 @@ void display_set(cache_t *cache, unsigned int set_index) {
     unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
     if (set_index < S) {
         cache_set_t *set = &cache->sets[set_index];
+        printf("LRU Matrix: %llX, next_lru: %llu\n", set->lru_matrix, set->next_lru);
         for (unsigned int i = 0; i < cache->A; i++) {
-            printf("Valid: %d Tag: %llx Lru: %lld Dirty: %d\n",
-                   set->lines[i].valid, set->lines[i].tag, set->lines[i].lru,
-                   set->lines[i].dirty);
+            printf("Valid: %d Tag: %llx Dirty: %d\n",
+                   set->lines[i].valid, set->lines[i].tag, set->lines[i].dirty);
         }
     } else {
         printf("Invalid Set %d. 0 <= Set < %d\n", set_index, S);
@@ -131,13 +129,34 @@ void free_cache(cache_t *cache) {
 }
 
 /* STUDENT TO-DO:
+ * Get the corresponding set for the address which may or may not be
+ * contained in the cache.
+ */
+cache_set_t *get_set(cache_t *cache, uword_t addr) {
+    /* your implementation */
+    return NULL;
+}
+
+/* STUDENT TO-DO:
  * Get the line for address contained in the cache
  * On hit, return the cache line holding the address
  * On miss, returns NULL
  */
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
-    
+    /* your implementation */
     return NULL;
+}
+
+/* STUDENT TO-DO:
+ * Implement the matrix based LRU algorithm seen in AC Lab
+ * for an associativity between [1,8].
+ */
+uword_t lru(unsigned int A, uword_t access, uword_t *matrix)
+{
+    assert (A <= 8);
+
+    /* your implementation*/
+    return 0;
 }
 
 /* STUDENT TO-DO:
@@ -154,6 +173,7 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  *  Return true if pos hits in the cache.
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
+    /* your implementation */
     return false;
 }
 
@@ -167,7 +187,7 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
     /* your implementation */
 
-    return NULL;
+    return evicted_line;
 }
 
 /* STUDENT TO-DO:
@@ -175,8 +195,7 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  * Preconditon: addr is contained within the cache.
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
-    /* your implementation */
-
+    /* Your implementation */
 }
 
 /* STUDENT TO-DO:
@@ -184,7 +203,7 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  * Preconditon: addr is contained within the cache.
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
-    /* your implementation */
+    /* Your implementation */
 }
 
 /*
