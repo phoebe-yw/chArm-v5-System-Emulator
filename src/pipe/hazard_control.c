@@ -108,6 +108,12 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_EXECUTE, false, true);
         pipe_control_stage(S_MEMORY, false, true);
         pipe_control_stage(S_WBACK, false, false);
+    } else if (dmem_status == IN_FLIGHT) {
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, false, true);
+        pipe_control_stage(S_WBACK, false, false);
     } else if (error(M_in->status)) {
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
