@@ -223,7 +223,39 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
     evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
     
-    
+    cache_line_t *line = select_line(cache, addr); // LINE TO REPLACE MAYBE EVICT
+
+    size_t b = _log(cache->B);
+    size_t s = _log(cache->C / (cache->A * cache->B));
+    uword_t set_index = (addr >> b) & ((1ULL << s) - 1);
+
+    // copy over fields
+    evicted_line->dirty= line->dirty;
+    evicted_line->valid = line->valid;
+    evicted_line->block_addr = (line->tag << s) | set_index;
+    memcpy(evicted_line->data, line->data, cache->B * sizeof(byte_t));
+
+    if (line->valid) {
+        if (line->dirty) {
+            dirty_eviction_count++;
+        } else {
+            clean_eviction_count++;
+        }
+    }
+
+    // load in the new line
+    line->valid = true;
+    line->dirty = operation == WRITE;
+    line->tag = addr >> (b + s);
+    if (incoming_data) {
+        memcpy(line->data, incoming_data, cache->B * sizeof(byte_t));
+    } else {
+        memset(line->data, 0, cache->B * sizeof(byte_t));
+    }
+
+    cache_set_t *set = get_set(cache, addr);
+    uword_t way = (uword_t)(line - set->lines);
+    set->next_lru = lru(cache->A, way, &set->lru_matrix);
 
     return evicted_line;
 }
@@ -233,7 +265,9 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  * Preconditon: addr is contained within the cache.
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
-    /* Your implementation */
+    cache_line_t *line = get_line(cache, addr);
+    uword_t offset = addr & (cache->B - 1);
+    memcpy(dest, line->data + offset, sizeof(word_t));
 }
 
 /* STUDENT TO-DO:
@@ -241,7 +275,10 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  * Preconditon: addr is contained within the cache.
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
-    /* Your implementation */
+    cache_line_t *line = get_line(cache, addr);
+    uword_t offset = addr & (cache->B - 1);
+    memcpy(line->data + offset, &val, sizeof(word_t));
+    line->dirty = true;
 }
 
 /*
