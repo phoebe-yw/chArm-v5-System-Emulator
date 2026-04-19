@@ -44,7 +44,7 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
         out->status = STAT_ADR;
     }
 
-    if (out->status == STAT_ADR || STAT_INS) {
+    if (out->status == STAT_ADR || out->status == STAT_INS) {
         M_PC = in->multipurpose_val.correction_PC;
     }
     return;

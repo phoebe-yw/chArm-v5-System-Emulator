@@ -232,7 +232,7 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
     // copy over fields
     evicted_line->dirty= line->dirty;
     evicted_line->valid = line->valid;
-    evicted_line->block_addr = (line->tag << s) | set_index;
+    evicted_line->block_addr = (line->tag << (s + b)) | (set_index << b);
     memcpy(evicted_line->data, line->data, cache->B * sizeof(byte_t));
 
     if (line->valid) {
