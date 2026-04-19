@@ -230,6 +230,7 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
             *val_e = alu_vala;
             break;
 
+#ifdef EC
         // EC operations    
         case CSEL_OP:
             *val_e = *cond_val ? alu_vala : alu_valb; 
@@ -243,6 +244,7 @@ comb_logic_t alu(uint64_t alu_vala, uint64_t alu_valb, uint8_t alu_valhw,
         case CSNEG_OP:
             *val_e = *cond_val ? alu_vala : ~alu_valb + 1;
             break;
+#endif
 
         default:
             return;

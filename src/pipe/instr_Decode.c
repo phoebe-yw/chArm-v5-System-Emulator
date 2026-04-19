@@ -47,8 +47,12 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                         op == OP_SUBS_RR || op == OP_CMP_RR ||
                         op == OP_ANDS_RR || op == OP_TST_RR;
     X_sigs->vala_sel = op == OP_ADRP || op == OP_BL;
+    X_sigs->valb_sel = ftable[op] == FORMAT_RR;
+    
+#ifdef EC
     X_sigs->valb_sel = ftable[op] == FORMAT_RR || op == OP_CSEL || op == OP_CSINV ||
                                      op == OP_CSNEG || op == OP_CSINC; 
+#endif
 
     M_sigs->dmem_read = op == OP_LDUR;
     M_sigs->dmem_write = op == OP_STUR;
@@ -171,7 +175,8 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         case OP_MOVK:
             *ALU_op = MOVK_OP;
             break;
-        
+
+#ifdef EC
         // EC instructions
         case OP_CSEL:
             *ALU_op = CSEL_OP;
@@ -185,7 +190,8 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         case OP_CSNEG:
             *ALU_op = CSNEG_OP;
             break;
-        
+#endif
+
     default:
         break;
     }
@@ -438,10 +444,14 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
     if (out->op == OP_B_COND) { // set cond if operation was B.COND
         out->cond = bitfield_u32(in->insnbits, 0, 4);
-    } else if (out->op == OP_CSEL || out->op == OP_CSINV ||
-               out->op == OP_CSNEG || out->op == OP_CSINC) {
+    } 
+
+#ifdef EC
+    if (out->op == OP_CSEL || out->op == OP_CSINV ||
+        out->op == OP_CSNEG || out->op == OP_CSINC) {
         out->cond = bitfield_u32(in->insnbits, 12, 4);
     }
+#endif
 
     if (out->op == OP_MOVK || out->op == OP_MOVZ) { // extract halfword for format I1
         out->val_hw = bitfield_u32(in->insnbits, 21, 2) << 4;

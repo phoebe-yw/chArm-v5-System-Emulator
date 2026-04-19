@@ -106,7 +106,8 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
         case OP_ANDS_RR:
             *op = bitfield_u32(insnbits, 0, 5) == 31 ? OP_TST_RR : OP_ANDS_RR;
             break;
-        
+
+#ifdef EC
         // EC opcodes
         case OP_CSNEG:
             *op = bitfield_u32(insnbits, 10, 2) == 0 ? OP_CSINV : OP_CSNEG;
@@ -114,6 +115,7 @@ static void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
         case OP_CSEL:
             *op = bitfield_u32(insnbits, 10, 2) == 1 ? OP_CSINC : OP_CSEL;
             break;
+#endif
 
         default:
             break;
