@@ -133,8 +133,10 @@ void free_cache(cache_t *cache) {
  * contained in the cache.
  */
 cache_set_t *get_set(cache_t *cache, uword_t addr) {
-    /* your implementation */
-    return NULL;
+    size_t b = _log(cache->B); // B is bytes per block, small b is bits 
+    size_t s = _log(cache->C / (cache->A * cache->B)); // S is number of sets, small s is bits
+    uword_t set_index = (addr >> b) & ((1ULL << s) - 1);
+    return &cache->sets[set_index];
 }
 
 /* STUDENT TO-DO:
@@ -143,7 +145,15 @@ cache_set_t *get_set(cache_t *cache, uword_t addr) {
  * On miss, returns NULL
  */
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
-    /* your implementation */
+    cache_set_t *set = get_set(cache, addr);
+    size_t b = _log(cache->B); 
+    size_t s = _log(cache->C / (cache->A * cache->B));
+    uword_t tag = addr >> (b + s);
+    for (unsigned int i = 0; i < cache->A; i++) {
+        if (set->lines[i].tag == tag && set->lines[i].valid) {
+            return &set->lines[i];
+        }
+    }
     return NULL;
 }
 
@@ -155,7 +165,17 @@ uword_t lru(unsigned int A, uword_t access, uword_t *matrix)
 {
     assert (A <= 8);
 
-    /* your implementation*/
+    uword_t row_mask = (1ULL << A) - 1;
+
+    *matrix |= (row_mask << (access * 8));
+    for (unsigned int i = 0; i < A; i++)
+        *matrix &= ~(1ULL << (i * 8 + access));
+
+    // find the row whose lower A bits are all 0
+    for (unsigned int i = 0; i < A; i++) {
+        if (((*matrix >> (i * 8)) & row_mask) == 0)
+            return i;
+    }
     return 0;
 }
 
@@ -164,8 +184,14 @@ uword_t lru(unsigned int A, uword_t access, uword_t *matrix)
  * Return the cache line selected to filled in by addr
  */
 cache_line_t *select_line(cache_t *cache, uword_t addr) {
-    /* your implementation */
-    return NULL;
+
+    cache_set_t *set = get_set(cache, addr);
+    for (unsigned int i = 0; i < cache->A; i++) {
+        if (!set->lines[i].valid) {
+            return &set->lines[i];
+        }
+    }
+    return &set->lines[set->next_lru];
 }
 
 /*  STUDENT TO-DO:
@@ -173,8 +199,19 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  *  Return true if pos hits in the cache.
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
-    /* your implementation */
-    return false;
+    cache_set_t *set = get_set(cache, addr);
+    cache_line_t *line = get_line(cache, addr);
+    if (!line) {
+        miss_count++;
+        return false;
+    }
+
+    hit_count++;
+    if (operation == WRITE) {
+        line->dirty = true;
+    }
+    set->next_lru = lru(cache->A, (uword_t) (line - set->lines), &set->lru_matrix);
+    return true;
 }
 
 /*  STUDENT TO-DO:
@@ -185,7 +222,8 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
                             byte_t *incoming_data) {
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
     evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
-    /* your implementation */
+    
+    
 
     return evicted_line;
 }
