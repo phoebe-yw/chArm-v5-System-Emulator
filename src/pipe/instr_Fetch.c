@@ -43,6 +43,15 @@ select_PC(uint64_t pred_PC,                  // The predicted PC
         *current_PC = pred_PC;
     }
 
+
+#ifdef EC
+    if ((M_opcode == OP_CBZ || M_opcode == OP_CBNZ) && !M_cond_val) {
+        *current_PC = seq_succ;
+    } else if (D_opcode == OP_BR || D_opcode == OP_BLR) {
+        *current_PC = val_a;
+    }
+#endif 
+
     return;
 }
 
@@ -66,6 +75,16 @@ static comb_logic_t predict_PC(uint64_t current_PC, uint32_t insnbits,
 
     // get sequential instruction i.e. PC + 4
     *seq_succ = current_PC + 4;
+
+#ifdef EC
+    if (op == OP_CBZ) {
+        *predicted_PC = current_PC + (bitfield_s64(insnbits, 5, 19) << 2);
+        return;
+    } else if (op == OP_CBNZ) {
+        *predicted_PC = current_PC + (bitfield_s64(insnbits, 5, 19) << 2);
+        return; 
+    }
+#endif
 
     if (op == OP_B || op == OP_BL) { // B1 format
         *predicted_PC = current_PC + (bitfield_s64(insnbits, 0, 26) << 2);

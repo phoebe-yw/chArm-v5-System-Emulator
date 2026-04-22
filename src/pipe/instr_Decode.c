@@ -26,7 +26,7 @@ extract_reg_func_t extract_regs_table[NUM_FORMATS];
  * Generate the correct control signals for this instruction's
  * future stages and write them to the corresponding struct.
  */
-static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
+static comb_logic_t     generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                                           x_ctl_sigs_t *X_sigs,
                                           m_ctl_sigs_t *M_sigs,
                                           w_ctl_sigs_t *W_sigs) {
@@ -50,6 +50,7 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
     X_sigs->valb_sel = ftable[op] == FORMAT_RR;
     
 #ifdef EC
+    X_sigs->vala_sel = op == OP_ADRP || op == OP_BL || op == OP_BLR;
     X_sigs->valb_sel = ftable[op] == FORMAT_RR || op == OP_CSEL || op == OP_CSINV ||
                                      op == OP_CSNEG || op == OP_CSINC; 
 #endif
@@ -63,6 +64,12 @@ static comb_logic_t generate_DXMW_control(opcode_t op, d_ctl_sigs_t *D_sigs,
                          op == OP_CMN_RR);
     W_sigs->wval_sel = op == OP_LDUR;
 
+#ifdef EC
+    W_sigs->dst_sel = op == OP_BL || op == OP_BLR;
+    W_sigs->w_enable = !(op == OP_NOP || op == OP_B || op == OP_B_COND || op == OP_STUR ||
+                         op == OP_RET || op == OP_HLT || op == OP_ERROR || op == OP_CMP_RR || 
+                         op == OP_CMN_RR || op == OP_CBZ || op == OP_CBNZ || op == OP_BR);
+#endif
     
     return;
 }
@@ -190,6 +197,16 @@ static comb_logic_t decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         case OP_CSNEG:
             *ALU_op = CSNEG_OP;
             break;
+        case OP_CBZ:
+            *ALU_op = CBZ_OP;
+            break;
+        case OP_CBNZ:
+            *ALU_op = CBNZ_OP;
+            break;
+        case OP_BLR:
+        case OP_BR:
+            *ALU_op = PASS_A_OP; 
+            break;
 #endif
 
     default:
@@ -250,6 +267,9 @@ comb_logic_t fix_regs(opcode_t op, uint8_t *src1, uint8_t *src2, uint8_t *dst) {
         case OP_B_COND:
             *src1 = XZR_NUM;
             *src2 = XZR_NUM;
+            break;
+        case OP_ADRP:
+            *src1 = XZR_NUM;
             break;
         default:
             // src1, src2, dst can be xzr or sp
@@ -392,9 +412,21 @@ comb_logic_t format_ec(uint32_t insnbits, opcode_t op, uint8_t *src1,
     case OP_CSINV:
         format_rr(insnbits, op, src1, src2, dst);
         break;
+    case OP_CBNZ:
+    case OP_CBZ:
+        *src1 = bitfield_u32(insnbits, 0, 5);
+        *src2 = 31;
+        *dst = 0;
+        break;
+    case OP_BLR:
+    case OP_BR:
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = 31;
+        *dst = op == OP_BLR ? 30 : 0;
     default:
         break;
     }
+
     return;
 }
 #endif

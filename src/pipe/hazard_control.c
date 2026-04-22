@@ -67,13 +67,11 @@ bool check_ret_hazard(opcode_t D_opcode) {
 
 #ifdef EC
 bool check_br_hazard(opcode_t D_opcode) {
-    // Student TODO
-    return false;
+    return D_opcode == OP_BR || D_opcode == OP_BLR;
 }
 
-bool check_cb_hazard(opcode_t D_opcode, uint64_t D_val_a) {
-    // Student TODO
-    return false;
+bool check_cb_hazard(opcode_t X_opcode, bool X_condval) {
+    return (X_opcode == OP_CBZ || X_opcode== OP_CBNZ) && !X_condval;
 }
 #endif
 
@@ -108,43 +106,80 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_EXECUTE, false, true);
         pipe_control_stage(S_MEMORY, false, true);
         pipe_control_stage(S_WBACK, false, false);
-    } else if (dmem_status == IN_FLIGHT) {
+        return;
+    }
+
+    if (dmem_status == IN_FLIGHT) {
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
         pipe_control_stage(S_EXECUTE, false, true);
         pipe_control_stage(S_MEMORY, false, true);
         pipe_control_stage(S_WBACK, false, false);
-    } else if (error(M_in->status)) {
+        return;
+    }
+
+    if (error(M_in->status)) {
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
         pipe_control_stage(S_EXECUTE, false, true);
         pipe_control_stage(S_MEMORY, false, false);
         pipe_control_stage(S_WBACK, false, false);
-    } else if (check_mispred_branch_hazard(X_opcode, X_condval)) {
+        return;
+    }
+
+    if (check_mispred_branch_hazard(X_opcode, X_condval)) {
         pipe_control_stage(S_FETCH, false, false);
         pipe_control_stage(S_DECODE, true, false);
         pipe_control_stage(S_EXECUTE, true, false);
         pipe_control_stage(S_MEMORY, false, false);
         pipe_control_stage(S_WBACK, false, false);
-    } else if (check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)) {
+        return;
+    }
+
+#ifdef EC
+    if (check_cb_hazard(X_opcode, X_condval)) {
+        pipe_control_stage(S_FETCH, false, false);
+        pipe_control_stage(S_DECODE, true, false);
+        pipe_control_stage(S_EXECUTE, true, false);
+        pipe_control_stage(S_MEMORY, false, false);
+        pipe_control_stage(S_WBACK, false, false);
+        return;
+    }
+#endif
+    if (check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)) {
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true);
         pipe_control_stage(S_EXECUTE, true, false);
         pipe_control_stage(S_MEMORY, false, false);
         pipe_control_stage(S_WBACK, false, false);
-    } else if (check_ret_hazard(D_opcode)) {
+        return;
+    }
+#ifdef EC
+    if (check_br_hazard(D_opcode)) {
         pipe_control_stage(S_FETCH, false, false);
         pipe_control_stage(S_DECODE, true, false);
         pipe_control_stage(S_EXECUTE, false, false);
         pipe_control_stage(S_MEMORY, false, false);
         pipe_control_stage(S_WBACK, false, false);
-    } else {
+        return;
+    }
+#endif
+
+    if (check_ret_hazard(D_opcode)) {
         pipe_control_stage(S_FETCH, false, false);
-        pipe_control_stage(S_DECODE, false, false);
+        pipe_control_stage(S_DECODE, true, false);
         pipe_control_stage(S_EXECUTE, false, false);
         pipe_control_stage(S_MEMORY, false, false);
         pipe_control_stage(S_WBACK, false, false);
+        return;
     }
+
+    pipe_control_stage(S_FETCH, false, false);
+    pipe_control_stage(S_DECODE, false, false);
+    pipe_control_stage(S_EXECUTE, false, false);
+    pipe_control_stage(S_MEMORY, false, false);
+    pipe_control_stage(S_WBACK, false, false);
+
 #else
     bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS;
     pipe_control_stage(S_FETCH, false, f_stall);
